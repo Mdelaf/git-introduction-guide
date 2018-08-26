@@ -245,25 +245,58 @@ Ahora todo el resto de los desarrolladores podrán ver los cambios que hicimos.
 
 #### Modifiqué y guardé un archivo. No he hecho commit ni push pero quiero descartar los cambios.
 Deshacemos todos los cambios hechos en el archivo desde su último commit
+
 `git checkout <file>`
 
 #### Hice varios cambios en el repositorio, además hice add y commits con los cambios. No hice push pero ahora quiero descartar los cambios
 Usamos el siguiente comando para ver los últimos commits que hicimos y sus respectos _id_.
+
 `git log --oneline` 
 
 Escogemos el commit hasta el cual queremos deshacer los cambios y usamos reset (se recomienda respaldar antes de hacer esto ya que los cambios se pierden de manera irreversible)
+
 `git reset --hard <commit-id>` 
 
-#### Hice varios cambios en el repositorio, luego hice add, un commit y push. Quiero descartar los cambios.
-Creamos un commit que revierta los cambios hechos en el último commit (esto revertirá el commit en el repositorio local)
-`git revert HEAD^1`
-
-Hacemos push para subir el nuevo commit al repositorio remoto
-`git push origin <branch>`
+Esto solo afecta tu repositorio local, si hiciste push de los commits no puedes usar esta técnica.  
 
 #### Llevo algunos días editando un archivo, le he hecho varios commits y pushs pero lo quiero volver al estado que estaba en `<commit-id>`.
-Revertimos los cambios en el archivo de manera local
+Revertimos los cambios en el archivo de manera local:
+
 `git checkout <commit-id> <file>`
 
-Lo actualizamos en el repositorio remoto
-`git push origin <branch>`
+Lo actualizamos en el repositorio remoto:
+
+`git push`
+
+#### Hice varios cambios en el repositorio, creé commits e hice push. Quiero volver el repositorio a un estado anterior.
+Si localmente tenemos modificaciones que no se han añadido a un commit, o tenemos más commits que en el repositorio remoto, entonces debemos preocuparnos de dejar el repositorio local y el repositorio remoto en el mismo estado. Para hacerlo tenemos tres formas distintas:
+1. Clonando de nuevo el repositorio.
+2. Haciendo un _hard reset_ hasta el último commit que tengamos en el repositorio remoto y quitando también los archivos nuevos.
+3. Creando un commit con todos los cambios pendientes y haciendo push. 
+
+Una vez tengamos los repositorios sincronizados podemos proceder a revertir. Para saber hasta donde revertir usamos:
+
+`git log --oneline`
+
+Supongamos que nos devuelve la siguiente lista de commits:
+```
+f2d72c7 tercer commit malo
+cd03347 segundo commit malo
+607f78a primer commit malo
+0831edf último commit bueno
+631f93e commit antiguo
+```
+
+Ahora ejecutamos el comando para revertir los últimos tres commits:
+
+`git revert --no-commmit f2d72c7 cd03347 607f78a`
+
+Notar que la lista de _commit ids_ que le pasamos a `git revert` debe ser desde el más reciente hasta el más antiguo. Con este comando se revierten todos los cambios que se hicieron desde el último commit bueno. Para subir los cambios al repositorio hacemos:
+
+`git commit -m "Revert hasta el último commit bueno"`
+
+`git push`
+
+Después de esto, ambos repositorio quedan sincronizados y en el mismo estado en que se encontraban para el último commit bueno. Los commits malos no se borran del historial, lo cual es una característica positiva porque el repositorio sigue siendo consistente y evita problemas cuando hay alguien más trabajando sobre alguno de los commits malos.
+
+Si realmente se desea borrar los commits del historial, se puede hacer un _hard reset_ y luego un _forced push_ pero puede traer problemas si se está trabajando con más gente y algunos servidores Git no permiten hacerlo.
